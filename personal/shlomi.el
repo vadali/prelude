@@ -27,5 +27,9 @@
 (lambda-as-lambda 'emacs-lisp-mode "(\\(\\<lambda\\>\\)")
 (add-hook 'prog-mode-hook 'turn-off-guru-mode t)
 (add-hook 'prog-mode-hook 'whitespace-turn-off t)
+
 (add-hook 'text-mode-hook 'turn-off-flyspell t)
 (add-hook 'prog-mode-hook 'turn-off-flyspell t)
+
+(setq browse-url-browser-function 'browse-url-generic
+      browse-url-generic-program "chromium-browser")
