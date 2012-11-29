@@ -33,3 +33,6 @@
 
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "chromium-browser")
+
+;a workaround for https://github.com/capitaomorte/yasnippet/issues/289
+(add-hook 'term-mode-hook (lambda() (yas-minor-mode -1)))
