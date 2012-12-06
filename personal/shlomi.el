@@ -36,3 +36,43 @@
 
 ;a workaround for https://github.com/capitaomorte/yasnippet/issues/289
 (add-hook 'term-mode-hook (lambda() (yas-minor-mode -1)))
+
+
+; tramp
+(require 'tramp)
+(add-to-list 'backup-directory-alist (cons tramp-file-name-regexp nil))
+(setq tramp-default-method "scp")
+
+;(add-to-list 'load-path "~/.emacs.d/tramp/lisp/")
+;(add-to-list 'tramp-default-proxies-alist  '("ec2-107-22-50-177.compute-1.amazonaws.com" nil "/ssh:ubuntu@ec2-107-22-50-177.compute-1.amazonaws.com:"))
+
+(tramp-set-completion-function "ssh"
+  '((tramp-parse-sconfig "/etc/ssh_config")
+    (tramp-parse-sconfig "~/.ssh/config")))
+
+(add-to-list 'tramp-remote-path "/home/ubuntu/ginger")
+
+; if a file is remote, show where its at
+(defconst my-mode-line-buffer-identification
+  (list
+   '(:eval
+     (let ((host-name
+            (if (file-remote-p default-directory)
+                (concat  (tramp-file-name-host
+                          (tramp-dissect-file-name default-directory)) ": ")
+              (""))))
+       (if (string-match "^[^0-9][^.]*\\(\\..*\\)" host-name)
+           (substring host-name 0 (match-beginning 1))
+         host-name)))
+   "%12b"))
+
+(setq-default
+ mode-line-buffer-identification
+ my-mode-line-buffer-identification)
+
+(add-hook
+ 'dired-mode-hook
+ '(lambda ()
+    (setq
+     mode-line-buffer-identification
+     my-mode-line-buffer-identification)))
