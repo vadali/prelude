@@ -25,11 +25,15 @@
 ;; Setup lambdas
 (lambda-as-lambda 'clojure-mode "(\\(\\<fn\\>\\)")
 (lambda-as-lambda 'emacs-lisp-mode "(\\(\\<lambda\\>\\)")
+
 (add-hook 'prog-mode-hook 'turn-off-guru-mode t)
 (add-hook 'prog-mode-hook 'whitespace-turn-off t)
 
 (add-hook 'text-mode-hook 'turn-off-flyspell t)
 (add-hook 'prog-mode-hook 'turn-off-flyspell t)
+
+(add-hook 'haskell-mode-hook 'turn-off-guru-mode t)
+(add-hook 'haskell-mode-hook 'whitespace-turn-off t)
 
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "chromium-browser")
@@ -49,6 +53,8 @@
 (tramp-set-completion-function "ssh"
   '((tramp-parse-sconfig "/etc/ssh_config")
     (tramp-parse-sconfig "~/.ssh/config")))
+
+(setq password-cache-expiry nil)
 
 (add-to-list 'tramp-remote-path "/home/ubuntu/ginger")
 
