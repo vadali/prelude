@@ -1,9 +1,9 @@
 ;;; prelude-packages.el --- Emacs Prelude: default package selection.
 ;;
-;; Copyright (c) 2011-2012 Bozhidar Batsov
+;; Copyright © 2011-2013 Bozhidar Batsov
 ;;
 ;; Author: Bozhidar Batsov <bozhidar@batsov.com>
-;; URL: http://batsov.com/emacs-prelude
+;; URL: https://github.com/bbatsov/prelude
 ;; Version: 1.0.0
 ;; Keywords: convenience
 
@@ -36,35 +36,40 @@
 (require 'package)
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.milkbox.net/packages/") t)
+;; set package-user-dir to be relative to Prelude install path
+(setq package-user-dir (expand-file-name "elpa" prelude-dir))
 (package-initialize)
 
-;; required because of a package.el bug
-(setq url-http-attempt-keepalives nil)
-
 (defvar prelude-packages
-  '(ack-and-a-half exec-path-from-shell expand-region gist guru-mode helm helm-projectile magit magithub melpa
-                   rainbow-mode volatile-highlights yasnippet solarized-theme zenburn-theme)
+  '(ace-jump-mode ack-and-a-half dash diminish elisp-slime-nav
+    expand-region flycheck gist
+    git-commit-mode gitconfig-mode gitignore-mode
+    guru-mode helm helm-projectile
+    key-chord magit melpa
+    rainbow-mode solarized-theme undo-tree
+    volatile-highlights yasnippet zenburn-theme)
   "A list of packages to ensure are installed at launch.")
 
 (defun prelude-packages-installed-p ()
-  (loop for p in prelude-packages
-        when (not (package-installed-p p)) do (return nil)
-        finally (return t)))
+  "Check if all packages in `prelude-packages' are installed."
+  (every #'package-installed-p prelude-packages))
 
 (defun prelude-install-packages ()
+  "Install all packages listed in `prelude-packages'."
   (unless (prelude-packages-installed-p)
     ;; check for new packages (package versions)
     (message "%s" "Emacs Prelude is now refreshing its package database...")
     (package-refresh-contents)
     (message "%s" " done.")
     ;; install the missing packages
-    (dolist (p prelude-packages)
-      (unless (package-installed-p p)
-        (package-install p)))))
+    (mapc #'package-install
+     (remove-if #'package-installed-p prelude-packages))))
 
 (prelude-install-packages)
 
 (defmacro prelude-auto-install (extension package mode)
+  "When file with EXTENSION is opened triggers auto-install of PACKAGE.
+PACKAGE is installed only if not already present.  The file is opened in MODE."
   `(add-to-list 'auto-mode-alist
                 `(,extension . (lambda ()
                                  (unless (package-installed-p ',package)
@@ -72,31 +77,24 @@
                                  (,mode)))))
 
 (defvar prelude-auto-install-alist
-  '(("\\.clj\\'" prelude-clojure clojure-mode)
-    ("\\.coffee\\'" prelude-coffee coffee-mode)
-    ("\\.css\\'" prelude-css css-mode)
-    ("\\.el\\'" prelude-emacs-lisp emacs-lisp-mode)
+  '(("\\.clj\\'" clojure-mode clojure-mode)
+    ("\\.coffee\\'" coffee-mode coffee-mode)
+    ("\\.css\\'" css-mode css-mode)
     ("\\.erl\\'" erlang erlang-mode)
     ("\\.feature\\'" feature-mode feature-mode)
     ("\\.groovy\\'" groovy-mode groovy-mode)
     ("\\.haml\\'" haml-mode haml-mode)
-    ("\\.hs\\'" prelude-haskell haskell-mode)
-    ("\\.js\\'" prelude-js js-mode)
-    ("\\.latex\\'" prelude-latex LaTeX-mode)
+    ("\\.hs\\'" haskell-mode haskell-mode)
+    ("\\.latex\\'" auctex LaTeX-mode)
     ("\\.less\\'" less-css-mode less-css-mode)
-    ("\\.lisp\\'" prelude-common-lisp lisp-mode)
     ("\\.lua\\'" lua-mode lua-mode)
     ("\\.markdown\\'" markdown-mode markdown-mode)
     ("\\.md\\'" markdown-mode markdown-mode)
     ("\\.php\\'" php-mode php-mode)
-    ("\\.pl\\'" prelude-perl cperl-mode)
-    ("\\.py\\'" python python-mode)
-    ("\\.rb\\'" prelude-ruby ruby-mode)
     ("\\.sass\\'" sass-mode sass-mode)
-    ("\\.scala\\'" prelude-scala scala-mode)
-    ("\\.scm\\'" prelude-scheme scheme-mode)
-    ("\\.scss\\'" prelude-scss scss-mode)
-    ("\\.xml\\'" prelude-xml nxml-mode)
+    ("\\.scala\\'" scala-mode2 scala-mode)
+    ("\\.scss\\'" scss-mode scss-mode)
+    ("\\.slim\\'" slim-mode slim-mode)
     ("\\.yml\\'" yaml-mode yaml-mode)))
 
 ;; markdown-mode doesn't have autoloads for the auto-mode-alist
@@ -105,12 +103,24 @@
   (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode)))
 
-(dolist (entry prelude-auto-install-alist)
-  (let ((extension (first entry))
-        (package (second entry))
-        (mode (third entry)))
-    (unless (package-installed-p package)
-      (prelude-auto-install extension package mode))))
+;; build auto-install mappings
+(mapc
+ (lambda (entry)
+   (let ((extension (car entry))
+         (package (cadr entry))
+         (mode (cadr (cdr entry))))
+     (unless (package-installed-p package)
+       (prelude-auto-install extension package mode))))
+ prelude-auto-install-alist)
+
+(defun prelude-ensure-module-deps (packages)
+  "Ensure PACKAGES are installed.
+Missing packages are installed automatically."
+  (mapc #'package-install (remove-if #'package-installed-p packages)))
 
 (provide 'prelude-packages)
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; prelude-packages.el ends here
