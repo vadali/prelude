@@ -1,3 +1,5 @@
+(require 'prelude-clojure)
+
 
 (add-hook 'nrepl-interaction-mode-hook
   'nrepl-turn-on-eldoc-mode)
@@ -34,6 +36,8 @@
 
 (add-hook 'haskell-mode-hook 'turn-off-guru-mode t)
 (add-hook 'haskell-mode-hook 'whitespace-turn-off t)
+
+(setq whitespace-line-column 9999)
 
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "chromium-browser")
@@ -82,3 +86,21 @@
     (setq
      mode-line-buffer-identification
      my-mode-line-buffer-identification)))
+
+
+(set-default 'tramp-default-proxies-alist (quote ((".*" "\\`root\\'" "/ssh:%h:"))))
+
+(require 'multiple-cursors)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-:") 'mc/mark-all-like-this)
+
+(require 'ace-jump-mode)
+(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+
+(defun sudo-find-file (file-name)
+  "Like find file, but opens the file as root."
+  (interactive "FSudo Find File: ")
+  (let ((tramp-file-name (concat "/sudo::" (expand-file-name file-name))))
+    (find-file tramp-file-name)))
