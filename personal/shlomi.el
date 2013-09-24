@@ -1,33 +1,47 @@
-(require 'prelude-clojure)
-
-
-(add-hook 'nrepl-interaction-mode-hook
-  'nrepl-turn-on-eldoc-mode)
-;; Auto-completion for Clojure
+(require 'ac-nrepl)
 (require 'auto-complete-config)
+(require 'prelude-clojure)
+(require 'tramp)
+(require 'multiple-cursors)
+(require 'ace-jump-mode)
+
+;;; visuals
+(menu-bar-mode 1)
+(cua-mode 1)
+
+;; Auto-completion for Clojure
 ;(add-to-list 'ac-dictionary-directories "~/.emacs.d/dict")
+
 (ac-config-default)
 
-(menu-bar-mode 1)
-
-(require 'ac-nrepl)
+(add-hook 'nrepl-interaction-mode-hook 'nrepl-turn-on-eldoc-mode)
 (add-hook 'nrepl-mode-hook 'ac-nrepl-setup)
 (add-hook 'nrepl-interaction-mode-hook 'ac-nrepl-setup)
+
 (eval-after-load "auto-complete" '(add-to-list 'ac-modes 'nrepl-mode))
-(defun set-auto-complete-as-completion-at-point-function () (setq completion-at-point-functions '(auto-complete)))
-(add-hook 'auto-complete-mode-hook 'set-auto-complete-as-completion-at-point-function)
-(add-hook 'nrepl-mode-hook 'set-auto-complete-as-completion-at-point-function)
+
+(defun set-auto-complete-as-completion-at-point-function ()
+  (setq completion-at-point-functions '(auto-complete)))
+
+(add-hook 'auto-complete-mode-hook     'set-auto-complete-as-completion-at-point-function)
+(add-hook 'nrepl-mode-hook             'set-auto-complete-as-completion-at-point-function)
 (add-hook 'nrepl-interaction-mode-hook 'set-auto-complete-as-completion-at-point-function)
-(cua-mode 1)
-(defun lambda-as-lambda (mode pattern)
+
+
+;;; set special chars
+(defun lambda-as-lambda (mode ch pattern)
   (font-lock-add-keywords
    mode `((,pattern
            (0 (progn (compose-region (match-beginning 1) (match-end 1)
-                                     "λ" 'decompose-region)))))))
+                                      ,ch 'decompose-region)))))))
 ;; Setup lambdas
-(lambda-as-lambda 'clojure-mode "(\\(\\<fn\\>\\)")
-(lambda-as-lambda 'emacs-lisp-mode "(\\(\\<lambda\\>\\)")
+(lambda-as-lambda 'clojure-mode "λ" "(\\(\\<fn\\>\\)")
+(lambda-as-lambda 'clojure-mode "λ" "(\\(fn\\)[\[[:space:]]")
+(lambda-as-lambda 'clojure-mode "ƒ" "\\(#\\)(")
+(lambda-as-lambda 'clojure-mode "∈" "\\(#\\){")
+(lambda-as-lambda 'emacs-lisp-mode  "λ" "(\\(\\<lambda\\>\\)")
 
+;;; fix annoying stuff
 (add-hook 'prog-mode-hook 'turn-off-guru-mode t)
 (add-hook 'prog-mode-hook 'whitespace-turn-off t)
 
@@ -37,17 +51,16 @@
 (add-hook 'haskell-mode-hook 'turn-off-guru-mode t)
 (add-hook 'haskell-mode-hook 'whitespace-turn-off t)
 
+;;; quit wraping my lines
 (setq whitespace-line-column 9999)
 
+;;; set up browser
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "chromium-browser")
-
-;a workaround for https://github.com/capitaomorte/yasnippet/issues/289
+;;; a workaround for https://github.com/capitaomorte/yasnippet/issues/289
 (add-hook 'term-mode-hook (lambda() (yas-minor-mode -1)))
 
-
-; tramp
-(require 'tramp)
+;;; tramp stuff
 (add-to-list 'backup-directory-alist (cons tramp-file-name-regexp nil))
 (setq tramp-default-method "scp")
 
@@ -62,7 +75,9 @@
 
 (add-to-list 'tramp-remote-path "/home/ubuntu/ginger")
 
-; if a file is remote, show where its at
+(set-default 'tramp-default-proxies-alist (quote ((".*" "\\`root\\'" "/ssh:%h:"))))
+
+;;; Status bar mods - if a file is remote, show where its at on the status bar
 (defconst my-mode-line-buffer-identification
   (list
    '(:eval
@@ -87,20 +102,16 @@
      mode-line-buffer-identification
      my-mode-line-buffer-identification)))
 
-
-(set-default 'tramp-default-proxies-alist (quote ((".*" "\\`root\\'" "/ssh:%h:"))))
-
-(require 'multiple-cursors)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-:") 'mc/mark-all-like-this)
-
-(require 'ace-jump-mode)
-(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
-
+;;; open files as root support
 (defun sudo-find-file (file-name)
   "Like find file, but opens the file as root."
   (interactive "FSudo Find File: ")
   (let ((tramp-file-name (concat "/sudo::" (expand-file-name file-name))))
     (find-file tramp-file-name)))
+
+;;; Key bindings
+(global-set-key (kbd "C-c SPC") 'ace-jump-mode)
+(global-set-key (kbd "C-;")     'mc/mark-all-like-this)
+(global-set-key (kbd "C-<")     'mc/mark-previous-like-this)
+(global-set-key (kbd "C->")     'mc/mark-next-like-this)
+(global-set-key (kbd "C-\"")    'mc/edit-lines)
