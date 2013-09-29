@@ -109,7 +109,19 @@
   (let ((tramp-file-name (concat "/sudo::" (expand-file-name file-name))))
     (find-file tramp-file-name)))
 
+;;; in elisp - eval and replace (+ 1 2 3) => 6
+(defun eval-and-replace ()
+  "Replace the preceding sexp with its value."
+  (interactive)
+  (backward-kill-sexp)
+  (condition-case nil
+      (prin1 (eval (read (current-kill 0)))
+             (current-buffer))
+    (error (message "Invalid expression")
+           (insert (current-kill 0)))))
+
 ;;; Key bindings
+(global-set-key (kbd "C-c C-e") 'eval-and-replace)
 (global-set-key (kbd "C-c SPC") 'ace-jump-mode)
 (global-set-key (kbd "C-;")     'mc/mark-all-like-this)
 (global-set-key (kbd "C-<")     'mc/mark-previous-like-this)
